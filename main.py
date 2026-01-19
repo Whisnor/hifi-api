@@ -13,6 +13,10 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 
 # Shared HTTP client is created in app lifespan for connection reuse
@@ -43,7 +47,7 @@ async def lifespan(app: FastAPI):
         if _http_client:
             await _http_client.aclose()
 
-API_VERSION = "2.2"
+API_VERSION = "2.3"
 
 app = FastAPI(
     title="HiFi-RestAPI",
@@ -197,7 +201,15 @@ async def make_request(url: str, token: Optional[str] = None, params: Optional[d
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
             raise HTTPException(status_code=404, detail="Resource not found")
-        raise HTTPException(status_code=e.response.status_code, detail="Upstream API error")
+        else:
+            logger.error(
+                "Upstream API error %s %s %s",
+                e.response.status_code,
+                url,
+                e.response.text,
+                exc_info=e,
+            )
+            raise HTTPException(status_code=e.response.status_code, detail="Upstream API error")
     except httpx.RequestError as e:
         if isinstance(e, httpx.TimeoutException):
             raise HTTPException(status_code=429, detail="Upstream timeout")
