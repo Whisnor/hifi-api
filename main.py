@@ -71,6 +71,7 @@ CLIENT_SECRET = os.getenv("CLIENT_SECRET", "VJKhDFqJPqvsPVNBV6ukXTJmwlvbttP7wlMl
 REFRESH_TOKEN: Optional[str] = os.getenv("REFRESH_TOKEN")
 USER_ID = os.getenv("USER_ID")
 TOKEN_FILE = os.getenv("TOKEN_FILE", "token.json")
+COUNTRY_CODE = os.getenv("COUNTRY_CODE", "US")
 
 if os.path.exists(TOKEN_FILE):
     with open(TOKEN_FILE, "r") as tok:
@@ -259,7 +260,7 @@ async def index():
 @app.get("/info/")
 async def get_info(id: int):
     url = f"https://api.tidal.com/v1/tracks/{id}/"
-    return await make_request(url, params={"countryCode": "US"})
+    return await make_request(url, params={"countryCode": COUNTRY_CODE})
 
 @app.get("/track/")
 async def get_track(id: int, quality: str = "HI_RES_LOSSLESS"):
@@ -285,35 +286,35 @@ async def search(
             "query": s,
             "limit": 25,
             "offset": 0,
-            "countryCode": "US",
+            "countryCode": COUNTRY_CODE,
         }),
         (a, "https://api.tidal.com/v1/search/top-hits", {
             "query": a,
             "limit": 25,
             "offset": 0,
             "types": "ARTISTS,TRACKS",
-            "countryCode": "US",
+            "countryCode": COUNTRY_CODE,
         }),
         (al, "https://api.tidal.com/v1/search/top-hits", {
             "query": al,
             "limit": 25,
             "offset": 0,
             "types": "ALBUMS",
-            "countryCode": "US",
+            "countryCode": COUNTRY_CODE,
         }),
         (v, "https://api.tidal.com/v1/search/top-hits", {
             "query": v,
             "limit": 25,
             "offset": 0,
             "types": "VIDEOS",
-            "countryCode": "US",
+            "countryCode": COUNTRY_CODE,
         }),
         (p, "https://api.tidal.com/v1/search/top-hits", {
             "query": p,
             "limit": 25,
             "offset": 0,
             "types": "PLAYLISTS",
-            "countryCode": "US",
+            "countryCode": COUNTRY_CODE,
         }),
     )
 
@@ -344,7 +345,7 @@ async def get_album(
         )
         return payload
 
-    tasks = [fetch(album_url, {"countryCode": "US"})]
+    tasks = [fetch(album_url, {"countryCode": COUNTRY_CODE})]
 
     max_chunk = 100
     current_offset = offset
@@ -353,7 +354,7 @@ async def get_album(
     while remaining_limit > 0:
         chunk_size = min(remaining_limit, max_chunk)
         tasks.append(
-            fetch(items_url, {"countryCode": "US", "limit": chunk_size, "offset": current_offset})
+            fetch(items_url, {"countryCode": COUNTRY_CODE, "limit": chunk_size, "offset": current_offset})
         )
         current_offset += chunk_size
         remaining_limit -= chunk_size
@@ -385,7 +386,7 @@ async def get_mix(
     url = "https://api.tidal.com/v1/pages/mix"
     params = {
         "mixId": id,
-        "countryCode": "US",
+        "countryCode": COUNTRY_CODE,
         "deviceType": "BROWSER",
     }
 
@@ -440,8 +441,8 @@ async def get_playlist(
         return payload
 
     playlist_data, items_data = await asyncio.gather(
-        fetch(playlist_url, {"countryCode": "US"}),
-        fetch(items_url, {"countryCode": "US", "limit": limit, "offset": offset}),
+        fetch(playlist_url, {"countryCode": COUNTRY_CODE}),
+        fetch(items_url, {"countryCode": COUNTRY_CODE, "limit": limit, "offset": offset}),
     )
 
     return {
@@ -466,7 +467,7 @@ async def get_similar_artists(
     url = f"https://openapi.tidal.com/v2/artists/{id}/relationships/similarArtists"
     params = {
         "page[cursor]": cursor,
-        "countryCode": "US",
+        "countryCode": COUNTRY_CODE,
         "include": "similarArtists,similarArtists.profileArt"
     }
 
@@ -509,7 +510,7 @@ async def get_similar_albums(
     url = f"https://openapi.tidal.com/v2/albums/{id}/relationships/similarAlbums"
     params = {
         "page[cursor]": cursor,
-        "countryCode": "US",
+        "countryCode": COUNTRY_CODE,
         "include": "similarAlbums,similarAlbums.coverArt,similarAlbums.artists"
     }
 
@@ -576,7 +577,7 @@ async def get_artist(
         artist_url = f"https://api.tidal.com/v1/artists/{id}"
         artist_data, token, cred = await authed_get_json(
             artist_url,
-            params={"countryCode": "US"},
+            params={"countryCode": COUNTRY_CODE},
             token=token,
             cred=cred,
         )
@@ -601,7 +602,7 @@ async def get_artist(
 
     # Fetch albums and singles/EPs directly in parallel
     albums_url = f"https://api.tidal.com/v1/artists/{f}/albums"
-    common_params = {"countryCode": "US", "limit": 100}
+    common_params = {"countryCode": COUNTRY_CODE, "limit": 100}
 
     tasks = [
         authed_get_json(albums_url, params=common_params, token=token, cred=cred),
@@ -612,7 +613,7 @@ async def get_artist(
         tasks.append(
             authed_get_json(
                 f"https://api.tidal.com/v1/artists/{f}/toptracks",
-                params={"countryCode": "US", "limit": 15},
+                params={"countryCode": COUNTRY_CODE, "limit": 15},
                 token=token,
                 cred=cred
             )
@@ -661,7 +662,7 @@ async def get_artist(
                 "https://api.tidal.com/v1/pages/album",
                 params={
                     "albumId": album_id,
-                    "countryCode": "US",
+                    "countryCode": COUNTRY_CODE,
                     "deviceType": "BROWSER",
                 },
                 token=token,
@@ -718,7 +719,7 @@ async def get_cover(
     if id is not None:
         track_data, token, cred = await authed_get_json(
             f"https://api.tidal.com/v1/tracks/{id}/",
-            params={"countryCode": "US"},
+            params={"countryCode": COUNTRY_CODE},
             token=token,
             cred=cred,
         )
@@ -737,7 +738,7 @@ async def get_cover(
 
     search_data, token, cred = await authed_get_json(
         "https://api.tidal.com/v1/search/tracks",
-        params={"countryCode": "US", "query": q, "limit": 10},
+        params={"countryCode": COUNTRY_CODE, "query": q, "limit": 10},
         token=token,
         cred=cred,
     )
@@ -771,7 +772,7 @@ async def get_lyrics(id: int):
     url = f"https://api.tidal.com/v1/tracks/{id}/lyrics"
     data, token, cred = await authed_get_json(
         url,
-        params={"countryCode": "US", "locale": "en_US", "deviceType": "BROWSER"},
+        params={"countryCode": COUNTRY_CODE, "locale": "en_US", "deviceType": "BROWSER"},
     )
 
     if not data:
