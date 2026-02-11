@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: resonance-hifi-api
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      pip install -r tidal_auth/requirements.txt
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: PYTHONUNBUFFERED
+        value: 1
